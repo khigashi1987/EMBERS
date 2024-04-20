@@ -1,0 +1,16 @@
+{
+    "analysis_method": ["shotgun", "amplicon", "both"],
+    "subject_type": ["adult", "infant", "both", "other"],
+    "country": ["United States", "United Kingdom", "China", "Germany", "France", "Italy", "Spain", "Japan", "Australia", "Canada", "South Korea", "India", "Brazil", "Netherlands", "Russia", "Turkey", "Switzerland", "Sweden", "Norway", "Denmark", "Finland", "Belgium", "Austria", "Ireland", "Portugal", "Greece", "Poland", "Czech Republic", "Romania", "Hungary", "Slovakia", "Bulgaria", "Croatia", "Slovenia", "Lithuania", "Latvia", "Estonia", "Cyprus", "Luxembourg", "Malta", "Iceland", "Liechtenstein", "Monaco", "San Marino", "Vatican City", "Andorra", "Montenegro", "Serbia", "Bosnia and Herzegovina", "Albania", "Macedonia", "Kosovo", "Moldova", "Ukraine", "Belarus", "Georgia", "Armenia", "Azerbaijan", "Kazakhstan", "Uzbekistan", "Turkmenistan", "Tajikistan", "Kyrgyzstan", "Afghanistan", "Pakistan", "Bangladesh", "Nepal", "Bhutan", "Sri Lanka", "Maldives", "Iran", "Iraq", "Syria", "Lebanon"],
+    "disease": ["",
+        "healthy",
+        "Type 2 Diabetes",
+        "Type 1 Diabetes",
+        "Celiac Disease",
+        "Inflammatory Bowel Disease",
+        "Crohn's Disease",
+        "Ulcerative Colitis",
+        "Irritable Bowel Syndrome",
+        "Colorectal Cancer"
+    ]
+}
