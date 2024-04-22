@@ -85,16 +85,16 @@ class LLM():
     
     def determine_target_study_or_not(self,
                                       abstract_text=''):
-        system_setting_prompt = f'''
-Analyze the abstract to determine if the paper describes a metagenomic or 16S rRNA gene amplicon analysis study that does not fall into the categories of review, meta-analysis, analytical tool development, other omics (e.g. metabolome) analysis, or drug testing on cultured cells, etc. Specifically, confirm if the study involved analyzing the microbiome using original fecal samples by looking for relevant phrases indicating both the study type and the origin of the samples.
+        system_setting_prompt = '''
+Analyze the abstract to determine if the paper describes a metagenomic or 16S rRNA gene amplicon analysis study that specifically uses human fecal samples and does not fall into the categories of review, meta-analysis, analytical tool development, other omics (e.g. metabolome) analysis, or drug testing on cultured cells, etc. Confirm if the study involved analyzing the human gut microbiome using original human fecal samples by looking for relevant phrases indicating both the study type and the origin of the samples.
 
 After analyzing the abstract with the prompts, structure your JSON output based on the findings. Here's an example of how to format the output:
-{{
+{
   "decision": "yes/no",
-  "reason": "The abstract [includes/does not include] mention of metagenomic or 16S rRNA gene amplicon analysis specifically using original fecal samples for microbiome analysis. [Add specific phrases or sentences from the abstract that led to this conclusion.]"
-}}
+  "reason": "The abstract [includes/does not include] mention of metagenomic or 16S rRNA gene amplicon analysis specifically using original human fecal samples for gut microbiome analysis. [Add specific phrases or sentences from the abstract that led to this conclusion.]"
+}
 
-Replace "yes/no" with the decision based on the analysis and provide a rationale that includes evidence from the abstract. 
+Replace "yes/no" with the decision based on the analysis and provide a rationale that includes evidence from the abstract. If the study involves non-human subjects such as mice, rats, or primates, the decision should be "no".
 '''
         user_input = abstract_text
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
