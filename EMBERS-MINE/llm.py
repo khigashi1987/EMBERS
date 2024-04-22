@@ -139,6 +139,10 @@ Abstract:
 Materials and Methods:
 {method_text}
 '''
+        
+        if self.compute_num_token(user_input) > Config.MAX_TOKENS:
+            # truncate input text
+            user_input = self.truncate(user_input, Config.MAX_TOKENS)
 
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)
@@ -185,6 +189,10 @@ Based on this example, please analyze the following text from the Methods sectio
 Materials and Methods:
 {method_text}
 '''
+        if self.compute_num_token(user_input) > Config.MAX_TOKENS:
+            # truncate input text
+            user_input = self.truncate(user_input, Config.MAX_TOKENS)
+
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)
 
@@ -265,5 +273,10 @@ Newly added keys:
 Paper Abstract and Method text:
 {paper_content}
 '''
+
+        if self.compute_num_token(user_input) > Config.MAX_TOKENS:
+            # truncate input text
+            user_input = self.truncate(user_input, Config.MAX_TOKENS)
+
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)

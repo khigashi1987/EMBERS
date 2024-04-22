@@ -113,7 +113,12 @@ class Analyzer():
         working_out_file = f'{log_prefix}_working.txt'
         ofp = open(working_out_file, 'w')
 
-        self.load_xml(pmc_dir)
+        try:
+            self.load_xml(pmc_dir)
+        except Exception as e:
+            print(f'XML Loading Error: {e}')
+            ofp.write(f'XML Loading Error: {e}\n')
+            return
         # Table loading is a heavy process and should be postponed as long as possible.
 
         run_processes = {
@@ -255,13 +260,17 @@ if __name__ == '__main__':
         result_dir = os.path.join(Config.RESULT_BASE_DIR, f'{TARGET_PMC}')
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
+        else:
+            # Already analyzed
+            continue
+
 
         out_prefix = os.path.join(result_dir, f'{TARGET_PMC}')
         log_prefix = os.path.join(Config.LOG_DIR, f'{TARGET_PMC}')
 
-        if os.path.exists(f'{out_prefix}_new_keys_descriptions.json'):
-            logging.info(f'\tAlready analyzed. Skip the process.')
-            continue
+        #if os.path.exists(f'{out_prefix}_new_keys_descriptions.json'):
+        #    logging.info(f'\tAlready analyzed. Skip the process.')
+        #    continue
 
         # Initialize
         llm = LLM(api_key=Config.OPENAI_API_KEY, model_name=Config.MODEL_NAME)
