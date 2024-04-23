@@ -6,6 +6,7 @@ import pandas as pd
 import docx
 from pypdf import PdfReader
 from camelot import read_pdf
+from config import Config
 
 class SUPPMATLoader():
     ###
@@ -119,6 +120,11 @@ class SUPPMATLoader():
             # In Text extraction process, main article body should be skipped.
             if not os.path.basename(pdf_file).startswith(article_id):
                 supp_method_text += self.extract_texts(pdf_file)
+            
+            # Skip if the file size is too large
+            if os.path.getsize(pdf_file) > Config.SKIP_SUPP_SIZE:
+                logging.info(f'\t\tSkip large file: {pdf_file}')
+                continue
 
             # Table extraction process including tables main article body
             logging.info(f'\t\tanalyzing {pdf_file}')
@@ -152,12 +158,21 @@ class SUPPMATLoader():
             logging.info(f'\t\tanalyze done. {pdf_file}')
         
         for docx_file in article_supp_docx_list:
+            # Skip if the file size is too large
+            if os.path.getsize(docx_file) > Config.SKIP_SUPP_SIZE:
+                logging.info(f'\t\tSkip large file: {docx_file}')
+                continue
+
             logging.info(f'\t\tanalyzing {docx_file}')
             supp_method_text += self.extract_texts_docx(docx_file)
 
-            extracted_tables_docx = self.extract_tables_docx(docx_file)
-            if len(extracted_tables_docx) > 0:
-                all_tables += extracted_tables_docx
+            try:
+                extracted_tables_docx = self.extract_tables_docx(docx_file)
+                if len(extracted_tables_docx) > 0:
+                    all_tables += extracted_tables_docx
+            except Exception as e:
+                print(e)
+                logging.error(f'\t\tDOCX Parsing Error: {e}')
 
             logging.info(f'\t\tanalyze done. {docx_file}')
         

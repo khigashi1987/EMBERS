@@ -13,6 +13,8 @@ class DevelopmentConfig:
 
     USER_EMAIL = os.environ.get('ENTREZ_EMAIL')
 
+    SKIP_SUPP_SIZE = 20 * 1024 * 1024  # 20MB
+
     SCHEMA_PROJECT_JSON = './SCHEMA/SCHEMA_project_update.json'
 
     DATABASE_RELATED_KEYS_JSON = './SCHEMA/DB_related_terms.json'
