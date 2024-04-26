@@ -1,6 +1,8 @@
 import json
+import numpy as np
 import pandas as pd
 from io import StringIO
+import base64
 from datetime import time, datetime, date
 from decimal import Decimal
 from json import JSONEncoder
@@ -18,6 +20,18 @@ class MyJSONEncoder(JSONEncoder):
             return float(obj) 
         elif isinstance(obj, pd.Series):
             return obj.to_list()
+        elif isinstance(obj, np.int64):
+            return int(obj) 
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, pd.DataFrame):
+            return obj.to_dict('records')
+        elif isinstance(obj, set):
+            return list(obj)
+        elif isinstance(obj, bytes):
+            return base64.b64encode(obj).decode('utf-8')
+        elif isinstance(obj, complex):
+            return {'real': obj.real, 'imag': obj.imag}
         return JSONEncoder.default(self, obj)
 
 def make_info_project(out_prefix, project_json):
@@ -128,7 +142,9 @@ def check_table(content, sample_list):
 def check_table_both_direction(out_prefix, content):
     sample_list = json.load(open(f'{out_prefix}_samples_update.json'))
     id_column, id_key = check_table(content, sample_list)
-    if id_column is None:
+    if id_column is None and len(content) < 100:
+        # transpose table if the size of table rows are not too large
+        # with the assumption that the rows are metadata and columns are samples
         content = transpose_clean(content)
         id_column, id_key = check_table(content, sample_list)
     if type(id_column) is not str:
