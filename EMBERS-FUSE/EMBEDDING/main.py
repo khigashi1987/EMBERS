@@ -66,10 +66,12 @@ class Encoder():
             sampling_vec = self.llm.get_embedding(methods_Sampling_text)
 
         methods_DNAExtraction_texts = methods['DNA extraction']
+        if type(methods_DNAExtraction_texts) is str:
+            methods_DNAExtraction_texts = [methods_DNAExtraction_texts]
+        methods_DNAExtraction_texts = [text for text in methods_DNAExtraction_texts if len(text) > 0]
         if len(methods_DNAExtraction_texts) == 0:
             DNAExtraction_vec = None
         else:
-            methods_DNAExtraction_texts = [text for text in methods_DNAExtraction_texts if len(text) > 0]
             DNAExtraction_vec = self.llm.get_multiple_embedding(methods_DNAExtraction_texts)
         methods_embedding = {'Sampling': methods_Sampling_text, 
                              'DNAExtraction': methods_DNAExtraction_texts, 

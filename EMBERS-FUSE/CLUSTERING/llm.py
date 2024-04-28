@@ -79,3 +79,38 @@ Key Findings:
 '''
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)
+
+    def summarize_methods(self,
+                          methods_texts=[]):
+        system_setting_prompt = '''
+Please analyze the following set of text snippets that describe nearly identical experimental procedure steps in human gut microbiome research. These snippets have been clustered together based on their similarity.
+Your task is to create a concise label in English (preferably a short phrase or a single word) that best represents the common experimental procedure described by this cluster. The label should be more specific and have a higher resolution than generic terms like "Fecal Sample Collection" or "DNA Extraction," as all the input texts will fall under one of these broad categories. Aim to capture the unique aspects of the procedure described in the cluster.
+Additionally, provide a brief explanation of why you think this label effectively represents the cluster.
+
+Please provide your output in the following JSON format:
+{
+  "Label": "Short English phrase or word representing the cluster",
+  "Reason": "Brief explanation of why this label represents the cluster"
+}
+
+Example input (a cluster of text snippets):
+[
+  "DNA was extracted from fecal samples using the QIAamp DNA Stool Mini Kit (Qiagen) according to the manufacturer's instructions.",
+  "Fecal DNA was isolated using the QIAamp DNA Stool Mini Kit (Qiagen, Hilden, Germany) following the manufacturer's protocol.",
+  "Bacterial genomic DNA was extracted from stool samples using the QIAamp DNA Stool Mini Kit (Qiagen, Germany) as per the manufacturer's instructions."
+]
+
+Example output:
+{
+  "Label": "DNA extraction using QIAamp DNA Stool Mini Kit",
+  "Reason": "All the snippets in this cluster describe the process of extracting DNA from fecal samples using the same commercially available kit (QIAamp DNA Stool Mini Kit) and following the manufacturer's instructions. This label captures the specific kit used, which differentiates this cluster from other DNA extraction methods."
+}
+'''
+
+        methods_text = "[" + '\n'.join(['"'+t+'"' for t in methods_texts]) + "]"
+        user_input = f'''
+Cluster of snippets of experimental procedure steps in human gut microbiome research:
+{methods_text}
+'''
+        return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
+                                   user_input=user_input)
