@@ -84,19 +84,33 @@ class LLM():
 
     
     def determine_target_study_or_not(self,
-                                      abstract_text=''):
+                                      abstract_text='',
+                                      method_text=''):
         system_setting_prompt = '''
-Analyze the abstract to determine if the paper describes a metagenomic or 16S rRNA gene amplicon analysis study that specifically uses human fecal samples and does not fall into the categories of review, meta-analysis, analytical tool development, other omics (e.g. metabolome) analysis, or drug testing on cultured cells, etc. Confirm if the study involved analyzing the human gut microbiome using original human fecal samples by looking for relevant phrases indicating both the study type and the origin of the samples.
+Analyze the abstract and methods section to determine if the paper describes an original research study that includes metagenomic or 16S rRNA gene amplicon analysis of newly collected human fecal samples. The study should not be a review, meta-analysis, tool development, or drug testing on cultured cells. Studies focusing on non-human subjects such as mice, rats, or primates should also be excluded. The study may include analysis of other human body sites (e.g., oral microbiome) or other omics data (e.g., metatranscriptomics, metabolomics), but should not be purely focused on non-gut microbiome or other omics.
 
-After analyzing the abstract with the prompts, structure your JSON output based on the findings. Here's an example of how to format the output:
+Confirm if the study likely involved analyzing the human gut microbiome using original human fecal samples based on the information provided in the methods section, even if the abstract does not explicitly mention the specific analysis methods (16S or shotgun).
+
+After analyzing the text with the prompts, structure your JSON output based on the findings. Here's an example of how to format the output:
 {
   "decision": "yes/no",
-  "reason": "The abstract [includes/does not include] mention of metagenomic or 16S rRNA gene amplicon analysis specifically using original human fecal samples for gut microbiome analysis. [Add specific phrases or sentences from the abstract that led to this conclusion.]"
+  "reason": "The abstract and methods section [suggest/do not suggest] that the study is an original research involving metagenomic or 16S rRNA gene amplicon analysis of newly collected human fecal samples. [Although/And] it may also involve analysis of other human body sites or other omics data, the focus [appears to/does not appear to] include the human gut microbiome. [Add specific phrases or sentences from the text that led to this conclusion, if available.]"
 }
 
-Replace "yes/no" with the decision based on the analysis and provide a rationale that includes evidence from the abstract. If the study involves non-human subjects such as mice, rats, or primates, the decision should be "no".
+Replace "yes/no" with the decision based on the analysis and provide a rationale that includes evidence from the text, if present. If the methods section provides clear evidence that the study includes original human gut microbiome analysis, the decision should be "yes" even if the abstract does not provide conclusive information.
 '''
-        user_input = abstract_text
+
+        user_input = f'''
+Abstract text:
+{abstract_text}
+
+Methods text:
+{method_text}
+'''
+        if self.compute_num_token(user_input) > Config.MAX_TOKENS:
+            # truncate input text
+            user_input = self.truncate(user_input, Config.MAX_TOKENS)
+
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)
 

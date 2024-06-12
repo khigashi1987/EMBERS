@@ -137,7 +137,8 @@ class Analyzer():
                 logging.info('\t\tAbstract not found. Skip the process.')
                 ofp.close()
                 return
-            result = self.llm.determine_target_study_or_not(abstract_text=self.abstract_content)
+            result = self.llm.determine_target_study_or_not(abstract_text=self.abstract_content,
+                                                            method_text=self.method_content)
             result = json.loads(result)
             ofp.write(f'Determined the type of the study from the abstract:\n{result}\n\n')
             if result['decision'] == 'no':
@@ -260,17 +261,20 @@ if __name__ == '__main__':
         result_dir = os.path.join(Config.RESULT_BASE_DIR, f'{TARGET_PMC}')
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
-        else:
-            # Already analyzed
-            continue
 
+        if os.path.exists(os.path.join(result_dir, 'finished_analysis')):
+            # already analyzed
+            logging.info(f'\tAlready analyzed. Skip the process.')
+            continue
 
         out_prefix = os.path.join(result_dir, f'{TARGET_PMC}')
         log_prefix = os.path.join(Config.LOG_DIR, f'{TARGET_PMC}')
 
-        #if os.path.exists(f'{out_prefix}_new_keys_descriptions.json'):
-        #    logging.info(f'\tAlready analyzed. Skip the process.')
-        #    continue
+        # Salvage data which was skipped in previous attempts
+        if os.path.exists(f'{out_prefix}_project.json'):
+            # not skipped data (analyzed in previous attempts)
+            logging.info(f'\tAlready analyzed. Skip the process.')
+            continue
 
         # Initialize
         llm = LLM(api_key=Config.OPENAI_API_KEY, model_name=Config.MODEL_NAME)
@@ -288,5 +292,7 @@ if __name__ == '__main__':
         analyzer.analyze_pmc(pmc_dir, log_prefix, out_prefix)
 
         logging.info(f'End Analyzing PMC: {TARGET_PMC}\n\n')
+        with open(os.path.join(result_dir, 'finished_analysis'), 'w') as f:
+            f.write('')
 
     logging.info('End analyzing process.')

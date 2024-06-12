@@ -208,6 +208,9 @@ def cleanse_sample_list(out_prefix):
     numerical_keys = []
     categorical_keys = []
     for column in df.columns:
+        # Convert list to tuple if the column contains list
+        df[column] = df[column].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+
         non_nan_values = df[column].dropna()
 
         try:

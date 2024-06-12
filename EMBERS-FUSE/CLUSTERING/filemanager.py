@@ -25,6 +25,10 @@ class FileManager():
                 data = pickle.load(open(pkl_file, 'rb'))
                 PMC_ID = os.path.basename(pkl_file).split('_')[0]
                 key_findings = data['key_findings']
+
+                if len(key_findings) == 0:
+                    continue
+
                 all_texts.append({'PMC_ID': PMC_ID, 
                                   'key_findings': key_findings})
                 vec = data['embedding']
@@ -95,3 +99,38 @@ class FileManager():
 
         logging.info('Loading methods embedding and text files...Done')
         return all_texts, all_embeddings, all_methods_indices
+    
+    def load_keys(self):
+        logging.info('Loading keys embedding and text files...')
+        keys_embedding_file = os.path.join(self.out_dir, 'keys_embedding.npy')
+        key_texts_file = os.path.join(self.out_dir, 'keys_texts.pkl')
+
+        if os.path.exists(keys_embedding_file) and \
+            os.path.exists(key_texts_file):
+            all_texts = pickle.load(open(key_texts_file, 'rb'))
+            all_embeddings = np.load(keys_embedding_file)
+        else:
+            all_texts = []
+            all_embeddings = []
+            for pkl_file in glob.glob(os.path.join(self.data_dir, 'PMC*/PMC*_new_keys_descriptions_embedding.pkl')):
+                data = pickle.load(open(pkl_file, 'rb'))
+                PMC_ID = os.path.basename(pkl_file).split('_')[0]
+                for d in data:
+                    all_texts.append({'PMC_ID': PMC_ID, 
+                                    'Key': d['Key'],
+                                    'Description': d['Description'],
+                                    'Example_values': d['Example_values']})
+                    vec = d['Embedding']
+                    all_embeddings.append(vec)
+
+            if len(all_embeddings) == 0:
+                logging.error('No keys embedding files')
+                return None, None
+            all_embeddings = np.vstack(all_embeddings)
+            
+            np.save(keys_embedding_file, all_embeddings)
+            with open(key_texts_file, 'wb') as f:
+                pickle.dump(all_texts, f)
+        
+        logging.info('Loading keys embedding and text files...Done')
+        return all_texts, all_embeddings

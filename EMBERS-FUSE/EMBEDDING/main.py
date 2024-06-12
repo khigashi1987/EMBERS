@@ -6,6 +6,7 @@ from config import Config
 from llm import LLM
 import json
 import datetime
+import random
 
 class Encoder():
     ###
@@ -13,8 +14,9 @@ class Encoder():
     # PMC*_project.json, PMC*_methods.json, PMC*_new_keys_descriptions.jsonを読み込み、
     # OpenAI APIによる文書埋め込みをおこなう
     ###
-    def __init__(self, llm):
+    def __init__(self, llm=None, llm_for_keys=None):
         self.llm = llm
+        self.llm_for_keys = llm_for_keys
 
     def encode_project(self, out_prefix):
         project_embedding_file  = f'{out_prefix}_project_embedding.pkl'
@@ -66,9 +68,10 @@ class Encoder():
             sampling_vec = self.llm.get_embedding(methods_Sampling_text)
 
         methods_DNAExtraction_texts = methods['DNA extraction']
-        if type(methods_DNAExtraction_texts) is str:
-            methods_DNAExtraction_texts = [methods_DNAExtraction_texts]
-        methods_DNAExtraction_texts = [text for text in methods_DNAExtraction_texts if len(text) > 0]
+        if type(methods_DNAExtraction_texts) is list:
+            methods_DNAExtraction_texts = [text for text in methods_DNAExtraction_texts if len(text) > 0]
+        else:
+            methods_DNAExtraction_texts = [str(methods['DNA extraction'])]
         if len(methods_DNAExtraction_texts) == 0:
             DNAExtraction_vec = None
         else:
@@ -86,9 +89,10 @@ class Encoder():
     def encode_new_keys_descriptions(self, out_prefix):
         new_keys_descriptions_embedding_file  = f'{out_prefix}_new_keys_descriptions_embedding.pkl'
         new_keys_descriptions_json_file = f'{out_prefix}_new_keys_descriptions.json'
+        samples_json_file = f'{out_prefix}_samples_update.json'
 
         if os.path.exists(new_keys_descriptions_embedding_file):
-            logging.info(f'\tAlready analyzed new_keys_descriptions json file: {new_keys_descriptions_json_file}')
+            logging.info(f'\tAlready analyzed new_keys_descriptions pickle file: {new_keys_descriptions_json_file}')
             return True
 
         if not os.path.exists(new_keys_descriptions_json_file):
@@ -98,14 +102,30 @@ class Encoder():
         with open(new_keys_descriptions_json_file, 'r') as f:
             new_keys_descriptions = json.load(f)
         
+        with open(samples_json_file, 'r') as f:
+            samples = json.load(f)
+        
         new_keys_descriptions_embedding = []
         for k,v in new_keys_descriptions.items():
             if len(k) > 0 and len(v) > 0:
-                key_value_string = f'{k}: {v}'
-                vec = self.llm.get_embedding(key_value_string)
+                target_string = f'{k}: {v}'
+
+                # make "value-examples" from samples
+                sample_values = [s[k] for s in samples if k in s and \
+                                                          s[k] not in ['', 'NA', 'NaN', None] and \
+                                                          type(s[k]) not in [list, dict]]
+                # if the number of unique values is less than 5, use all unique values
+                # otherwise, use 5 random unique values
+                if len(set(sample_values)) <= 5:
+                    example_values = list(set(sample_values))
+                else:
+                    example_values = random.sample(list(set(sample_values)), 5)
+
+                vec = self.llm_for_keys.get_embedding(target_string)
                 if vec is not None:
                     result = {'Key':k,
                               'Description':v,
+                              'Example_values':example_values,
                               'Embedding':vec}
                     new_keys_descriptions_embedding.append(result)
 
@@ -157,7 +177,8 @@ if __name__ == '__main__':
 
         # Initialize
         llm = LLM(api_key=Config.OPENAI_API_KEY, model_name=Config.MODEL_NAME)
-        encoder = Encoder(llm=llm)
+        llm_for_keys = LLM(api_key=Config.OPENAI_API_KEY, model_name=Config.MODEL_NAME_FOR_KEYS)
+        encoder = Encoder(llm=llm, llm_for_keys=llm_for_keys)
 
         # Encode all
         encoder.encode(out_prefix)
