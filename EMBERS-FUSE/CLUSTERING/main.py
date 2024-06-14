@@ -149,6 +149,7 @@ class RunCluster():
 
         if with_llm_summary:
             logging.info('\tSummarizing clustering results...')
+            labels_descriptions = []
             keys_labels = ['Unlabelled'] * keys_embs.shape[0]
             for cluster_id in range(cluster_indices.max()+1):
                 keys_indices_cluster = np.where(cluster_indices == cluster_id)[0]
@@ -157,9 +158,12 @@ class RunCluster():
                 result = json.loads(result)
                 for idx in keys_indices_cluster:
                     keys_labels[idx] = result['Label']
+                labels_descriptions.append(result)
                 logging.info(f'\tCluster{cluster_id}: {result}')
             with open(os.path.join(Config.OUT_DIR, 'keys_labels.pkl'), 'wb') as f:
                 pickle.dump(keys_labels, f)
+            with open(os.path.join(Config.OUT_DIR, 'keys_labels_descriptions.json'), 'w') as f:
+                json.dump(labels_descriptions, f)
             logging.info('\tSummarizing clustering results...Done')
         else:
             keys_labels = ['Unlabelled'] * keys_embs.shape[0]
