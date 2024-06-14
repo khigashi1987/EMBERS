@@ -164,9 +164,8 @@ class SUPPMATLoader():
                 continue
 
             logging.info(f'\t\tanalyzing {docx_file}')
-            supp_method_text += self.extract_texts_docx(docx_file)
-
             try:
+                supp_method_text += self.extract_texts_docx(docx_file)
                 extracted_tables_docx = self.extract_tables_docx(docx_file)
                 if len(extracted_tables_docx) > 0:
                     all_tables += extracted_tables_docx
