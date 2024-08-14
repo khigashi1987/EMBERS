@@ -11,7 +11,7 @@ class FileManager():
         self.data_dir = config.DATA_DIR
         self.integration_dir = config.INTEGRATED_DATA_DIR
         self.log_dir = config.LOG_DIR
-        self.setting_file = config.SETTING_FILE
+        self.instructions_file = config.INSTRUCTIONS_FILE
         self.initialize_from_zero = config.INITIALIZE_FROM_ZERO
     
     def setup_samples_files(self):
@@ -23,10 +23,10 @@ class FileManager():
         else:
             pass
 
-    def load_settings(self):
-        with open(self.setting_file, 'r') as f:
-            settings = json.load(f)
-        return settings
+    def load_instructions(self):
+        with open(self.instructions_file, 'r') as f:
+            instructions = json.load(f)
+        return instructions
 
     def load_integrated_labals(self):
         keys_integrated_labels_file = os.path.join(self.integration_dir, 'keys_labels_descriptions.json')
@@ -44,6 +44,10 @@ class FileManager():
         with open(keys_texts_file, 'rb') as f:
             keys_texts = pickle.load(f)
         return keys_texts
+    
+    def check_if_samples_json_exists(self, pmc_number):
+        samples_json_file = os.path.join(self.data_dir, f'{pmc_number}/{pmc_number}_samples_update_integrated.json')
+        return os.path.exists(samples_json_file)
     
     def load_samples_json(self, pmc_number):
         samples_json_file = os.path.join(self.data_dir, f'{pmc_number}/{pmc_number}_samples_update_integrated.json')
@@ -66,7 +70,15 @@ class FileManager():
         with open(output_file, 'w') as f:
             json.dump(keyname_variations, f, indent=4)
 
-    def write_transform_code(self, pmc_number, transform_code_result):
+    def write_transform_code(self, key, pmc_number, transform_code_result):
         output_file = os.path.join(self.data_dir, f'{pmc_number}/{pmc_number}_transform_code.json')
-        with open(output_file, 'w') as f:
-            json.dump(transform_code_result, f, indent=4)
+        if not os.path.exists(output_file):
+            out_content = {}
+            out_content[key] = transform_code_result
+            with open(output_file, 'w') as f:
+                json.dump(out_content, f, indent=4)
+        else:
+            previous_content = json.load(open(output_file, 'r'))
+            previous_content[key] = transform_code_result
+            with open(output_file, 'w') as f:
+                json.dump(previous_content, f, indent=4)
