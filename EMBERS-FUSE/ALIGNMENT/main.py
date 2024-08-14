@@ -12,7 +12,7 @@ class Aligner():
     def __init__(self, llm, filemanager):
         self.llm = llm
         self.filemanager = filemanager
-        self.align_targets = self.filemanager.load_settings()
+        self.special_instructions = self.filemanager.load_instructions()
         logging.info('Setting up samples files...')
         self.filemanager.setup_samples_files()
         logging.info('Samples files are set up.')
@@ -26,16 +26,12 @@ class Aligner():
         self.integration = {}
         for integrated_label in integrated_labels:
             label = integrated_label['Label']
-
-            if label not in self.align_targets.keys():
-                continue
-
             description = integrated_label['Description']
             self.integration[label] = {}
             self.integration[label]['Description'] = description
             self.integration[label]['Original_keys'] = []
             keys_indices = np.where(np.array(keys_labels) == label)[0]
-            pmc_numbers = [keys_texts[n]['PMC_ID'] for n in keys_indices]
+            pmc_numbers = list(set([keys_texts[n]['PMC_ID'] for n in keys_indices]))
             for pmc_id in pmc_numbers:
                 pmc_info = {'PMC_ID':pmc_id}
                 pmc_info['Keys'] = [keys_texts[n]['Key'] for n in keys_indices if keys_texts[n]['PMC_ID'] == pmc_id]
@@ -69,52 +65,87 @@ class Aligner():
     
     def align_keys(self):
         logging.info('Aligning keys...')
-        for target in self.align_targets.keys():
+
+        for i, target in enumerate(self.integration.keys()):
             logging.info(f'Aligning target: {target}')
+
             for original_key in self.integration[target]['Original_keys']:
                 logging.info('\t'+str(original_key))
+
 
                 pmc_number = original_key['PMC_ID']
                 keys = original_key['Keys']
                 keys_info = original_key['Keys_Info']
 
                 samples = self.filemanager.load_samples_json(pmc_number)
-                # Randomly sample 10 elements.
-                random_indices = np.random.choice(len(samples), min(10, len(samples)), replace=False)
-                samples_key_values = []
-                for i in random_indices:
-                    samples_key_values.append({key:samples[i].get(key) for key in keys})
 
-                input_conditions = {}
-                input_conditions['reference_keys'] = keys
-                input_conditions['target_key'] = target
-                input_conditions['reference_key_descriptions'] = keys_info
-                input_conditions['target_key_description'] = self.align_targets[target]['Instructions']
-                input_conditions['sample_values'] = samples_key_values
+                if target in self.special_instructions.keys():
+                    instructions = self.special_instructions[target]['Instructions']
 
-                result = self.llm.generate_transformation_code(input_conditions=input_conditions)
-                result = json.loads(result)
-                self.filemanager.write_transform_code(pmc_number, result)
+                    # Randomly sample 10 elements.
+                    random_indices = np.random.choice(len(samples), min(10, len(samples)), replace=False)
+                    samples_key_values = []
+                    for i in random_indices:
+                        samples_key_values.append({key:samples[i].get(key) for key in keys})
 
-                transform_code = result['Python_code']
+                    input_conditions = {}
+                    input_conditions['reference_keys'] = keys
+                    input_conditions['target_key'] = target
+                    input_conditions['reference_key_descriptions'] = keys_info
+                    input_conditions['target_key_description'] = instructions
+                    input_conditions['sample_values'] = samples_key_values
 
-                if 'Conversion_possible' in result.keys() and result['Conversion_possible'] == 'yes':
-                    for i in range(len(samples)):
-
-                        if not all([key in samples[i].keys() for key in keys]):
-                            samples[i][f'EMBERS___{target}'] = None
-                            continue
-
-                        current_input = {key:samples[i][key] for key in keys}
-                        local_vars = {'input': current_input}
-
-                        try:
-                            exec(transform_code, {}, local_vars)
-                            transformed_value = local_vars['transform_data'](current_input)
-                            samples[i][f'EMBERS___{target}'] = transformed_value
-                        except Exception as e:
-                            samples[i][f'EMBERS___{target}'] = None
+                    try:
+                        result = self.llm.generate_transformation_code(input_conditions=input_conditions)
+                        result = json.loads(result)
+                    except Exception as e:
+                        # Retry
+                        logging.info(e)
+                        result = self.llm.generate_transformation_code(input_conditions=input_conditions)
+                        result = json.loads(result)
                     
+                    self.filemanager.write_transform_code(target, pmc_number, result)
+
+                    transform_code = result['Python_code']
+
+                    if 'Conversion_possible' in result.keys() and result['Conversion_possible'] == 'yes':
+                        for i in range(len(samples)):
+
+                            current_input = {}
+                            for key in keys:
+                                if key in samples[i].keys():
+                                    current_input[key] = samples[i][key]
+                                else:
+                                    current_input[key] = None
+
+                            local_vars = {'input': current_input}
+
+                            samples[i][f'EMBERS___{target}'] = {'Original':[], 'Aligned':None}
+                            for key in keys:
+                                current_element = {'key':key, 'value':samples[i].get(key)}
+                                samples[i][f'EMBERS___{target}']['Original'].append(current_element)
+
+                            try:
+                                exec(transform_code, local_vars)
+                                transformed_value = local_vars['transform_data'](current_input)
+                                samples[i][f'EMBERS___{target}']['Aligned'] = transformed_value
+                            except Exception as e:
+                                logging.info(e)
+                    else:
+                        # no conversion possible
+                        for i in range(len(samples)):
+                            samples[i][f'EMBERS___{target}'] = {'Original':[], 'Aligned':None}
+                            for key in keys:
+                                current_element = {'key':key, 'value':samples[i].get(key)}
+                                samples[i][f'EMBERS___{target}']['Original'].append(current_element)
+                else:
+                    # no special instructions
+                    for i in range(len(samples)):
+                        samples[i][f'EMBERS___{target}'] = {'Original':[], 'Aligned':None}
+                        for key in keys:
+                            current_element = {'key':key, 'value':samples[i].get(key)}
+                            samples[i][f'EMBERS___{target}']['Original'].append(current_element)
+                        
                 self.filemanager.update_samples_json(pmc_number, samples)
             logging.info(f'Aligning target: {target}...Done')
 
@@ -138,8 +169,8 @@ if __name__ == '__main__':
     filemanager = FileManager(config=Config)
     aligner = Aligner(llm=llm, filemanager=filemanager)
 
-    aligner.clustering_result_extraction()
-    aligner.keyname_variations()
-    aligner.align_keys()
+    #aligner.clustering_result_extraction()
+    #aligner.keyname_variations()
+    #aligner.align_keys()
 
     logging.info('End analyzing process.')

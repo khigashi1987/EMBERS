@@ -51,6 +51,7 @@ class LLM():
     
     def generate_transformation_code(self,
                                      input_conditions=[]):
+
         system_setting_prompt = '''
 Given the following inputs:
 1. Reference key list and target key
@@ -70,6 +71,8 @@ The Python code should attempt to convert as many sample records as possible bas
 Include error handling and edge case considerations in the generated code. Provide clear comments explaining the logic behind the conversion process.
 
 Please ensure that the generated Python code only defines the 'transform_data' function and does not include any example usage or test cases. The 'transform_data' function should be directly callable with the 'input' variable after executing the script with exec(), and it should return only the transformed value.
+
+If the generated code uses any functions from non-standard Python packages, such as numpy.isnan or math.isnan, please include the necessary import statements at the beginning of the script.
 '''
 
         user_input = f'''
@@ -87,5 +90,6 @@ Description of the target key:
 List of sample values:
 {input_conditions['sample_values']}
 '''
+
         return self.openai_wrapper(system_setting_prompt=system_setting_prompt,
                                    user_input=user_input)

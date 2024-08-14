@@ -1,0 +1,38 @@
+{
+    "Ethnicity": {
+        "Instructions": "This metadata item describes the ethnicity of the study participant. As the information may be provided at various levels of resolution, generally use the description from the original key-value pair as is. If it is difficult to infer the ethnicity from the provided description, indicate 'Unknown'. If the provided description is unrelated to ethnicity, consider it as non-convertible. Implement error handling to manage unexpected input formats."
+    },
+    "Body Mass Index (BMI)": {
+        "Instructions": "Metadata item representing the body mass index of the study participants. The value must be a float number. BMI is calculated as weight in kilograms divided by the square of height in meters. Implement error handling to manage unexpected input formats."
+    },
+    "Age (years)": {
+        "Instructions": "The age of the study participants, expressed in years. The value must be float. If the input age has units of months, weeks, or days, it should be converted to years. Implement error handling to manage unexpected input formats."
+    },
+    "Collection Date": {
+        "Instructions": "This metadata item indicates the subject infant's days of life (age). The value must be a float (days) or NaN (numpy.nan). Input data may indicate the age of the infant or simply the date and time of sampling. In the former case, look for keys that suggest infant age, such as \"Day of life\", \"DOL\", \"Age in days\", etc. and convert the corresponding value to a float. For all other cases (e.g., regular date strings), the value must be NaN. Implement error handling to manage unexpected input formats."
+    },
+    "Biological Sex": {
+        "Instructions": "Metadata item representing the biological sex of the study participants. The value must be string and can be one of the following: 'Male', 'Female', 'Other' Implement error handling to manage unexpected input formats."
+    },
+    "Mode of Delivery": {
+        "Instructions": "Metadata item describing the method of childbirth. The value must be a string and can be one of the following: 'Vaginal_delivery', 'Cesarean_section', 'Other'. Implement error handling to manage unexpected input formats."
+    },
+    "Cancer Stage": {
+        "Instructions": "Metadata item representing the stage of cancer in study subjects. This is a controlled vocabulary term of AJCC (American Joint Committee on Cancer) standard cancer staging system. This must be string and one of the following: 'Stage 0', 'Stage I', 'Stage II', 'Stage III', 'Stage IV', 'Other'. If TNM staging system is used, estimate the AJCC stage based on TNM values. If the stage is not known, use 'Other'. Implement error handling to manage unexpected input formats."
+    },
+    "Bristol Stool Scale Score": {
+        "Instructions": "A clinical metric used to classify the form of human feces into seven categories based on the Bristol Stool Scale. This must be string and one of the following values: 'Type1', 'Type2', 'Type3', 'Type4', 'Type5', 'Type6', 'Type7' of 'Other'. Implement error handling to manage unexpected input formats."
+    },
+    "Antibiotic Exposure": {
+        "Instructions": "Metadata item describing any exposure to antibiotics in a study participant. As a subject in human gut microbiome research, it is crucial to determine whether antibiotics have been used within the past 6 months. The item indicates whether the participant is estimated to have taken antibiotics at the present time or within the 6-month period prior to the current timepoint. This must be string and one of the following values: 'Yes', 'No', 'Other'. Implement error handling to manage unexpected input formats."
+    },
+    "Health Status": {
+        "Instructions": "Metadata item describing whether the health status of the study participant is classified as 'Healthy' or not. Based on the original key-value item, infer whether the subject can be considered healthy or not. This must be string and one of the following values: 'Healthy', 'Diseased', 'Other'. Implement error handling to manage unexpected input formats."
+    },
+    "Host Disease": {
+        "Instructions": "This metadata item describes whether the study participant has a disease, and if so, specifies the name of the disease. Based on the original key-value item, infer the disease name. If the subject can be determined to have a disease, provide the name of the disease. If the subject can be considered healthy, indicate 'Healthy'. In all other cases, specify 'Unknown'. The value must be a string. Implement error handling to manage unexpected input formats."
+    },
+    "Geographic Location (Latitude and Longitude)": {
+        "Instructions": "This metadata item describes the geographic location of the study participant. In the original key-value pair, various geographical information such as latitude and longitude may be provided. The value must be a string representing the location information (country, city, or region name, lat_lon string, or \"Unknown\"). If the input dictionary contains direct location information (e.g., country, city, region names), return this value as a string without modification. If the input dictionary contains latitude and longitude data, convert it to a standardized string format: \"XX.XXXX YY.YYYY\" (for northern latitude and eastern longitude). Do not use geopy or any external API for location lookups or conversions. Implement proper error handling and return \"Unknown\" if the location cannot be determined or if any issues occur."
+    }
+}

@@ -11,6 +11,6 @@ class DevelopmentConfig:
     DATA_DIR = '/Volumes/MDatahubDev/Total_result'
     INTEGRATED_DATA_DIR = '/Volumes/MDatahubDev/Total_result_integration/integrated'
     LOG_DIR = '/Volumes/MDatahubDev/Total_result/log'
-    SETTING_FILE = './settings.json'
+    INSTRUCTIONS_FILE = './instructions.json'
 
 Config = DevelopmentConfig
